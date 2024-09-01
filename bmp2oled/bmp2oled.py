@@ -44,7 +44,7 @@ def print_files():
     print("B - Back / N - Next, type number or filename, or type @A for all files, Q - Quit")
 
 def choose_file():
-    global command, current_page, total_pages, current_files, quit_flag
+    global command, current_page, total_pages, current_files, quit_flag, dir_list
 
     selection = None
     error = None
@@ -65,7 +65,7 @@ def choose_file():
         if (selection.upper() == "Q"):
             quit_flag = True
             break
-        if (selection.upper() not in selectable and not path.isfile(selection)):
+        if (selection.upper() not in selectable and selection not in dir_list):
             error = "Select a valid option"
             continue
         if (selection.upper() == "B" and current_page > 0):
@@ -96,6 +96,9 @@ def convert(bmp_path):
     bmp.seek(0x0016)
     height = int.from_bytes(bmp.read(4), "little")
 
+    bmp_name_height = bmp_name.upper() + "_HEIGHT"
+    bmp_name_width = bmp_name.upper() + "_WIDTH "
+    
     print("Width:\t\t"+ str(width)+"\nHeight:\t\t"+str(height))
 
     bmp.seek(0x000A)
@@ -105,17 +108,9 @@ def convert(bmp_path):
     bmp.seek(data_offset)
     data = list(bmp.read())
     
-    bmp_name_height = bmp_name.upper() + "_HEIGHT"
-    bmp_name_width = bmp_name.upper() + "_WIDTH "
-
-    cpp_str = ""
-    cpp_str += "#define " + bmp_name_height + " " + str(height) + "\n"
-    cpp_str += "#define " + bmp_name_width + " " + str(width) + "\n"
-    cpp_str += "static const unsigned char PROGMEM " + bmp_name + "[] = {"
 
     data_length = len(data)
     line_buffer = int(data_length/height)
-
     
     skip_bytes = (4-(4*(width/32)))%4
     if (width % 32 == 0):
@@ -123,6 +118,12 @@ def convert(bmp_path):
 
     print("Line Buffer:\t" + str(line_buffer))
     print("Skip Bytes:\t" + str(skip_bytes) + "\n")
+
+    cpp_str = ""
+    cpp_str += "#define " + bmp_name_height + " " + str(height) + "\n"
+    cpp_str += "#define " + bmp_name_width + " " + str(width) + "\n"
+    cpp_str += "static const unsigned char PROGMEM " + bmp_name + "[] = {"
+
     for i in range(height):
         cpp_str += "\n\t"
         row_index = (data_length) - line_buffer * (i + 1)
@@ -144,6 +145,7 @@ def convert(bmp_path):
     cpp_str += "display.clearDisplay();\n"
     cpp_str += "display.drawBitmap(0, 0,  " + bmp_name + ", " + bmp_name_width + ", " + bmp_name_height + ", 1);\n"
     cpp_str += "display.display();\n"
+    
     bmp.close()
 
     cpp_file = open(bmp_name + ".txt", "w")
