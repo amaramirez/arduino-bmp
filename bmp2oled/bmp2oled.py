@@ -57,7 +57,6 @@ def choose_file():
         selectable = ["B","N", "@A"]
         for i in range(len(current_files)):
             selectable.append(str(i+1))
-        print(selectable)
         
         if (error != None):
             print(error)
@@ -140,8 +139,11 @@ def convert(bmp_path):
             cpp_str += ","
         
     cpp_str += "\n};\n\n"
-    cpp_str += "display.drawBitmap(0, 0,  " + bmp_name + ", " + bmp_name_width + ", " + bmp_name_height + ", 1);"
-
+    
+    cpp_str += "//Copy this to after initialization\n"
+    cpp_str += "display.clearDisplay();\n"
+    cpp_str += "display.drawBitmap(0, 0,  " + bmp_name + ", " + bmp_name_width + ", " + bmp_name_height + ", 1);\n"
+    cpp_str += "display.display();\n"
     bmp.close()
 
     cpp_file = open(bmp_name + ".txt", "w")
